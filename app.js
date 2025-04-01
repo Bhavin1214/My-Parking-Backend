@@ -6,6 +6,7 @@ const cors = require("cors");
 const authRoutes = require("./src/routes/authRoutes");
 const parkingLocationRoutes = require("./src/routes/ParkingLocationRoute");
 const bookingRoutes = require("./src/routes/BookingRoute");
+const { autocomplete } = require("./src/Cornjobs")
 
 const app = express();
 
@@ -13,10 +14,15 @@ const app = express();
 app.use(express.json());
 app.use(cors());
 
+
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/parkingLocations", parkingLocationRoutes);
 app.use("/api/bookings",bookingRoutes)
+
+setInterval(() => {
+  autocomplete()
+}, 300000);
 
 // MongoDB Connection
 mongoose

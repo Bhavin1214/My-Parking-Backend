@@ -4,20 +4,17 @@ const Booking = require("./models/Booking");
 const ParkingLocation = require("./models/ParkingLocation");
 
 
-cron.schedule("*/5 * * * *", async () => {
-  try {
-   
+
+const autocomplete = async()=>{ 
+try {
     const expiredBookings = await Booking.find({
-      status: "active",
+      status: "active", 
       endTime: { $lte: new Date() }, 
     });
 
     if (expiredBookings.length === 0) {
-   
       return;
     }
-
-   
 
     for (let booking of expiredBookings) {
       const parking = await ParkingLocation.findById(booking.parkingId);
@@ -27,15 +24,18 @@ cron.schedule("*/5 * * * *", async () => {
         } else if (booking.vehicleType === "4-wheeler") {
           parking.slots["4-wheeler"].available += 1;
         }
-        await parking.save();
+        await parking.save(); 
       }
 
       booking.status = "completed";
       await booking.save();
-
-    
     }
+
   } catch (error) {
     console.error(" Error in auto-completion task:", error);
   }
-});
+}
+
+
+
+module.exports = { autocomplete }
