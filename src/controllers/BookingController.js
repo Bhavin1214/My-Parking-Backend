@@ -171,6 +171,48 @@ const completeBooking = async (req, res) => {
   }
 };
 
+const getProviderCurrentBookings = async (req, res) => {
+  try {
+    const providerId = req.user.id;
 
+    // Get parking locations created by the provider
+    const providerLocations = await ParkingLocation.find({ createdBy: providerId }).select('_id');
+    const locationIds = providerLocations.map(loc => loc._id);
 
-module.exports = { createBooking, getBookings, cancelBooking ,completeBooking };
+    // Find active bookings for those locations
+    const bookings = await Booking.find({
+      parkingId: { $in: locationIds },
+      status: "active",
+    }).populate("userId", "name email")
+      .populate("parkingId", "name address");
+
+    res.json(bookings);
+  } catch (error) {
+    console.error("Error fetching provider's current bookings:", error);
+    res.status(500).json({ message: "Failed to fetch bookings", error: error.message });
+  }
+};
+
+const getProviderBookingHistory = async (req, res) => {
+  try {
+    const providerId = req.user.id;
+
+    // Fetch only parking locations created by this provider
+    const providerLocations = await ParkingLocation.find({ createdBy: providerId }).select('_id');
+
+    const locationIds = providerLocations.map(loc => loc._id);
+
+    // Find bookings with status other than "active"
+    const bookings = await Booking.find({
+      parkingId: { $in: locationIds },
+      status: { $ne: "active" }
+    }).populate("parkingId userId");
+
+    res.json(bookings);
+  } catch (error) {
+    console.error("Error fetching booking history:", error);
+    res.status(500).json({ message: "Failed to fetch booking history", error: error.message });
+  }
+};
+
+module.exports = { createBooking, getBookings, cancelBooking ,completeBooking, getProviderCurrentBookings, getProviderBookingHistory };

@@ -1,5 +1,5 @@
 const express = require("express");
-const { createBooking, getBookings, cancelBooking, completeBooking } = require("../controllers/BookingController");
+const { createBooking, getBookings, cancelBooking, completeBooking , getProviderCurrentBookings, getProviderBookingHistory} = require("../controllers/BookingController");
 const authMiddleware = require("../middleware/authMiddleware");
 const router = express.Router();
 
@@ -15,5 +15,8 @@ router.delete("/cancle-bookings/:id", authMiddleware, cancelBooking);
 
 router.put("/bookings/:bookingId/complete", completeBooking);
 
+router.get("/provider-current", authMiddleware, getProviderCurrentBookings);
+
+router.get("/provider-booking-history", authMiddleware, getProviderBookingHistory);
 
 module.exports = router;
