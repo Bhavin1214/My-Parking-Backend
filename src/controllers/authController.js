@@ -3,22 +3,22 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const sendEmail = require("../util/sendMail");
 
-// Register a new user
+
 const register = async (req, res) => {
   try {
-    const { name, email, password, phone, age, gender } = req.body;
+    const { name, email, password, phone, age, gender, role } = req.body;
 
-    // Check if user already exists
+   
     let user = await User.findOne({ email });
     if (user) {
       return res.status(400).json({ message: "User already exists" });
     }
 
-    // Hash the password
+   
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    // Create new user document
+   
     user = new User({
       name,
       email,
@@ -26,14 +26,16 @@ const register = async (req, res) => {
       phone,
       age,
       gender,
+      role: role || undefined, 
     });
 
     await user.save();
 
-    // Generate JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role }, 
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.status(201).json({ message: "Register success", token, user });
   } catch (error) {
@@ -41,27 +43,25 @@ const register = async (req, res) => {
   }
 };
 
-// Login existing user
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
 
-    // Find user by email
     const user = await User.findOne({ email });
     if (!user) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Compare password with hashed password
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    // Generate JWT token
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign(
+      { id: user._id, role: user.role }, 
+      process.env.JWT_SECRET,
+      { expiresIn: "7d" }
+    );
 
     res.json({ message: "Login success", token, user });
   } catch (error) {
@@ -69,9 +69,9 @@ const login = async (req, res) => {
   }
 };
 
+
 const getProfile = async (req, res) => {
   try {
-    // req.user.id is set in the authMiddleware after verifying the token
     const user = await User.findById(req.user.id).select("-password"); // Exclude password field
     
     
@@ -87,7 +87,7 @@ const getProfile = async (req, res) => {
 const updateProfile = async (req, res) => {
   try {
     // Extract required fields from request body
-    const { name, email, phone, gender } = req.body; // Removed age
+    const { name, email, phone, gender } = req.body;
 
     // Validate required fields
     if (!name || !email || !phone) {
@@ -162,7 +162,7 @@ const forgotPassword = async (req, res) => {
     }
 
     // Generate a JWT reset token valid for 10 minutes
-    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const resetToken = jwt.sign({ id: user._id,role: user.role }, process.env.JWT_SECRET, {
       expiresIn: "10m",
     });
 
@@ -203,7 +203,7 @@ const forgotPasswordbyemail = async (req, res) => {
     }
 
     // Generate a JWT reset token valid for 10 minutes
-    const resetToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    const resetToken = jwt.sign({ id: user._id,role: user.role }, process.env.JWT_SECRET, {
       expiresIn: "10m",
     });
 

@@ -23,7 +23,11 @@ const UserSchema = new mongoose.Schema({
   gender: {
     type: String,
     enum: ["Male", "Female", "Other"],
-  },
+  },role: {
+    type: String,
+    enum: ['user', 'provider'],
+    default: 'user'
+  },  
   savedLocations: [{
      type: mongoose.Schema.Types.ObjectId, 
      ref: 'ParkingLocation'
