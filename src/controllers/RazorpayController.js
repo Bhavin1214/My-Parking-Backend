@@ -1,4 +1,7 @@
 const Razorpay = require("razorpay");
+const Transaction = require("../models/Transaction");
+require("dotenv").config();
+const crypto = require("crypto");
 
 // Razorpay instance
 const razorpay = new Razorpay({
@@ -36,30 +39,52 @@ exports.createOrder = async (req, res) => {
 
 // Verify Razorpay payment
 exports.verifyPayment = async (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature , paidamount} = req.body;
+  const userId = req.user.id; // you said req.user is available
 
   if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    await Transaction.create({
+      user: userId,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      status: "failed",
+      paidamount:paidamount,
+      reason: "Missing payment details",
+    });
     return res.status(400).json({ message: "Missing payment details" });
   }
 
-  // Validate the payment signature sent by Razorpay
-  const crypto = require("crypto");
   const hmac = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET);
-  hmac.update(razorpay_order_id + "|" + razorpay_payment_id);
+  hmac.update(`${razorpay_order_id}|${razorpay_payment_id}`);
   const generated_signature = hmac.digest("hex");
 
-  // If the signatures match, payment is valid
   if (generated_signature !== razorpay_signature) {
+    await Transaction.create({
+      user: userId,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      status: "failed",
+      paidamount:paidamount,
+      reason: "Signature mismatch",
+    });
     return res.status(400).json({ message: "Payment signature mismatch" });
   }
 
   try {
-    // Proceed with your business logic here (e.g., save payment details, mark booking as paid, etc.)
-    // You can create a booking in the database or perform any other required actions.
+    await Transaction.create({
+      user: userId,
+      razorpay_order_id,
+      razorpay_payment_id,
+      razorpay_signature,
+      status: "success",
+      paidamount:paidamount,
+    });
 
     res.json({ message: "Payment verification successful!" });
   } catch (error) {
-    console.error("Error verifying payment:", error);
-    res.status(500).json({ message: "Error verifying payment" });
+    console.error("Error saving transaction:", error);
+    res.status(500).json({ message: "Internal server error" });
   }
 };

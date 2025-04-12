@@ -8,6 +8,7 @@ const parkingLocationRoutes = require("./src/routes/ParkingLocationRoute");
 const bookingRoutes = require("./src/routes/BookingRoute");
 const razorpayroute = require("./src/routes/razorpayRoute")
 const analyticsroute = require("./src/routes/analyticsRoutes")
+const transactionroute = require("./src/routes/transactionroutes")
 const { autocomplete } = require("./src/Cornjobs")
 
 const app = express();
@@ -23,6 +24,7 @@ app.use("/api/parkingLocations", parkingLocationRoutes);
 app.use("/api/bookings",bookingRoutes)
 app.use("/api/payments",razorpayroute)
 app.use("/api",analyticsroute)
+app.use("/api/transactions",transactionroute)
 
 setInterval(() => {
   autocomplete()
